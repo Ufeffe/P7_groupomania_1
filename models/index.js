@@ -38,8 +38,5 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 
-// Like.belongsToMany(User, { through: 'UserLikePost', as: "userLike", foreignKey: "userId" });
-// Like.belongsToMany(Post, { through: 'UserLikePost', as: "postLike", foreignKey: "postId" });
 
-// sequelize.sync({ alter: true });
 module.exports = db;

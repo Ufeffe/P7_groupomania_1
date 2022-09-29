@@ -1,6 +1,5 @@
 'use strict';
 const User = require('../models/user')
-const Like = require('../models/user_like_post')
 
 
 const {
@@ -19,16 +18,10 @@ module.exports = (sequelize, DataTypes) => {
                 as: "user",
                 foreignKey: "userId"
             });
-            Post.belongsToMany(models.User, {
-                foreignKey: 'postId',
-                through: 'user_like_post',
-                as: 'like_userId'
+            Post.hasMany(models.Like, {
+                as: "likes",
+                foreignKey: "postId",
             });
-            Post.belongsToMany(models.User, {
-                foreignKey: 'postId',
-                through: 'commentaire',
-                as: 'com_userId'
-            })
         }
     }
     Post.init({
@@ -52,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        likes: {
+        nb_likes: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0

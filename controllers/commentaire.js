@@ -1,8 +1,7 @@
-const db = require('../models');
-const { sequelize, Post, Commentaire } = require('../models')
+const { sequelize, Post, Commentaire, User } = require('../models')
+    // import services from '../service/services'
 
-
-exports.createCommentaire = (req, res, next) => {
+exports.createCommentaire = async(req, res, next) => {
 
     const commentaire = new Commentaire({
         description: req.body.description,
@@ -10,24 +9,21 @@ exports.createCommentaire = (req, res, next) => {
         postId: req.params.id
     })
 
-    Commentaire.create({...commentaire })
+    await commentaire.save()
         .then(() => res.status(201).json({ message: 'commentaire enregistré !' }))
         .catch(error => res.status(400).json({ error }));
 }
 
-
 exports.modifyCommentaire = (req, res, next) => {
 
-    const commentaireObject = req.body.description
+    const description = req.body.description
 
     Commentaire.findOne({ where: { id: req.params.id } })
         .then(commentaire => {
             if (isAdmin(req.auth.role) || isCreator(commentaire.userId, req.auth.userId)) {
-
-                Commentaire.update({ commentaireObject }, { where: { id: req.params.id } })
-                    .then(() => res.status(200).json({ message: 'commentaire modifiée' }))
+                Commentaire.update({ description }, { where: { id: req.params.id } })
+                    .then(() => res.status(200).json({ message: 'commentaire modifié' }))
                     .catch((error) => res.status(401).json({ message: error }))
-
             } else {
                 res.status(401).json({ message: 'Non autorisé' })
             }
@@ -35,72 +31,35 @@ exports.modifyCommentaire = (req, res, next) => {
         .catch(error => res.status(400).json({ error }))
 }
 
-
 exports.getAllCommentaire = (req, res, next) => {
-
-    const { postId } = req.params.id
-
-    try {
-        const result = Commentaire.findAll({
-            where: { id: postId },
-            attributes: ['id', 'commentaire'],
+    const postId = parseInt(req.params.id)
+    Commentaire.findAll({
+            where: { postId: postId },
             include: {
-                model: db.users,
-                as: 'users',
-                attributes: [username]
+                model: User,
+                as: 'user',
+                attributes: ['username']
             }
         })
-    } catch {
-        (error => res.status(400).json({ error }))
-    }
+        .then(commentaires => res.status(200).json(commentaires))
+        .catch(error => res.status(400).json({ error }))
+}
+
+exports.deleteCommentaire = (req, res, next) => {
+
+    Commentaire.findOne({ where: { id: req.params.id } })
+        .then((commentaire) => {
+            if (isAdmin(req.auth.role) || isCreator(commentaire.userId, req.auth.userId)) {
+                commentaire.destroy({ where: { id: req.params.id } })
+                    .then(() => res.status(200).json({ message: 'commentaire supprimé !' }))
+                    .catch((error) => res.status(401).json({ message: error }))
+            } else {
+                res.status(401).json({ message: 'Non autorisé' })
+            }
+        })
+        .catch(error => res.status(500).json({ message: error }))
 
 }
-exports.getAllCommentaire = () => {
-    return Commentaire.findAll({
-            include: [{
-                model: Commentaire,
-                as: "Commentaires",
-                attributes: ["id"],
-                through: {
-                    attributes: ["id", "userId", "description", "updatedAt"],
-                },
-            }, ],
-        })
-        .then((Commentaire) => {
-            return Commentaire;
-        })
-        .catch(error => res.status(404).json({ error }))
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function isAdmin(role) {
     console.log("check de ton role", role);
